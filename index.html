@@ -1,0 +1,207 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sorting Visualizer</title>
+<style>
+  body {
+    background-color: #0f0f0f;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+  }
+
+  h1 { margin-top: 20px; color: #ffd700; text-shadow: 1px 1px 5px black; }
+  #description { max-width: 600px; margin: 0 auto 20px auto; font-size: 16px; color: #ccc; }
+  #controls { margin: 20px; }
+  label { margin: 0 10px; font-size: 14px; }
+  input[type="range"], select { width: 150px; vertical-align: middle; margin: 0 5px; }
+  #array-container {
+    display: flex; align-items: flex-end; justify-content: center;
+    height: 350px; width: 90%; margin: 30px auto; background-color: #1c1c1c;
+    border-radius: 12px; padding: 10px; overflow: hidden; box-shadow: 0 0 15px #222;
+  }
+  .bar { width: 10px; margin: 2px; border-radius: 4px; transition: height 0.2s ease, background 0.2s ease; }
+  button {
+    margin: 10px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px;
+    cursor: pointer; background: linear-gradient(45deg,#444,#888); color: white; transition: 0.2s;
+    box-shadow: 0 3px 6px #000;
+  }
+  button:hover { background: linear-gradient(45deg,#666,#aaa); transform: scale(1.05); }
+  #status { font-size: 18px; margin-top: 10px; color: #00ff7f; height: 25px; }
+  #legend { display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 14px; color: #ccc; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .color-box { width: 15px; height: 15px; display: inline-block; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>Sorting Algorithm Visualizer</h1>
+<div id="description">
+  A dynamic visualization of sorting algorithms in JavaScript. Features Bubble, Selection, and Insertion Sort with customizable speed and array size.  
+  Perfect for learning and showcasing algorithm skills.
+</div>
+
+<div id="controls">
+  <label>Algorithm:
+    <select id="algorithmSelect">
+      <option value="bubble">Bubble Sort</option>
+      <option value="selection">Selection Sort</option>
+      <option value="insertion">Insertion Sort</option>
+    </select>
+  </label>
+  <label>Array Size:
+    <input type="range" id="sizeSlider" min="10" max="100" value="30" />
+  </label>
+  <label>Speed:
+    <input type="range" id="speedSlider" min="10" max="500" value="100" />
+  </label>
+  <button id="generateBtn">Generate Array</button>
+  <button id="sortBtn">Sort</button>
+</div>
+
+<div id="array-container"></div>
+<div id="status"></div>
+
+<div id="legend">
+  <div class="legend-item"><span class="color-box" style="background:#00ffff"></span> Unsorted</div>
+  <div class="legend-item"><span class="color-box" style="background:#ff6347"></span> Comparing</div>
+  <div class="legend-item"><span class="color-box" style="background:#ffa500"></span> Current Key</div>
+  <div class="legend-item"><span class="color-box" style="background:#32cd32"></span> Sorted</div>
+</div>
+
+<script>
+let array = [];
+let speed = 100;
+
+const sizeSlider = document.getElementById("sizeSlider");
+const speedSlider = document.getElementById("speedSlider");
+const algorithmSelect = document.getElementById("algorithmSelect");
+const statusText = document.getElementById("status");
+const generateBtn = document.getElementById("generateBtn");
+const sortBtn = document.getElementById("sortBtn");
+
+// Update speed
+speedSlider.addEventListener("input", () => speed = Number(speedSlider.value));
+
+// Generate array
+function generateArray(size = 30) {
+  size = Number(size);
+  const container = document.getElementById("array-container");
+  container.innerHTML = "";
+  array = [];
+  statusText.textContent = "";
+  for (let i = 0; i < size; i++) {
+    const value = Math.floor(Math.random() * 250) + 20; // min height 20px
+    array.push(value);
+    const bar = document.createElement("div");
+    bar.classList.add("bar");
+    bar.style.height = `${value}px`;
+    bar.style.backgroundColor = "#00ffff";
+    container.appendChild(bar);
+  }
+}
+
+// Button actions
+generateBtn.addEventListener("click", () => generateArray(sizeSlider.value));
+window.onload = () => generateArray(sizeSlider.value);
+
+// Disable/Enable buttons
+function disableButtons() {
+  generateBtn.disabled = true;
+  sortBtn.disabled = true;
+  algorithmSelect.disabled = true;
+  statusText.textContent = "Sorting in Progress...";
+}
+function enableButtons() {
+  generateBtn.disabled = false;
+  sortBtn.disabled = false;
+  algorithmSelect.disabled = false;
+  statusText.textContent = "Sorting Complete ✅";
+}
+
+// Swap bars
+function swap(bar1, bar2) {
+  return new Promise(resolve => {
+    let tempHeight = bar1.style.height;
+    bar1.style.height = bar2.style.height;
+    bar2.style.height = tempHeight;
+    setTimeout(() => resolve(), speed);
+  });
+}
+
+// Bubble Sort
+async function bubbleSort() {
+  disableButtons();
+  const bars = document.getElementsByClassName("bar");
+  for (let i = 0; i < array.length; i++) {
+    for (let j = 0; j < array.length - i - 1; j++) {
+      bars[j].style.background = "#ff6347";
+      bars[j + 1].style.background = "#ff6347";
+      if (array[j] > array[j + 1]) {
+        [array[j], array[j + 1]] = [array[j + 1], array[j]];
+        await swap(bars[j], bars[j + 1]);
+      }
+      bars[j].style.background = "#00ffff";
+      bars[j + 1].style.background = "#00ffff";
+    }
+    bars[array.length - i - 1].style.background = "#32cd32";
+  }
+  enableButtons();
+}
+
+// Selection Sort
+async function selectionSort() {
+  disableButtons();
+  const bars = document.getElementsByClassName("bar");
+  for (let i = 0; i < array.length; i++) {
+    let minIdx = i;
+    bars[i].style.background = "#ffd700";
+    for (let j = i + 1; j < array.length; j++) {
+      bars[j].style.background = "#ff4500";
+      await new Promise(r => setTimeout(r, speed));
+      if (array[j] < array[minIdx]) minIdx = j;
+      bars[j].style.background = "#00ffff";
+    }
+    [array[i], array[minIdx]] = [array[minIdx], array[i]];
+    await swap(bars[i], bars[minIdx]);
+    bars[i].style.background = "#32cd32";
+  }
+  enableButtons();
+}
+
+// Insertion Sort
+async function insertionSort() {
+  disableButtons();
+  const bars = document.getElementsByClassName("bar");
+  for (let i = 1; i < array.length; i++) {
+    let key = array[i];
+    let j = i - 1;
+    bars[i].style.background = "#ffa500";
+    await new Promise(r => setTimeout(r, speed));
+    while (j >= 0 && array[j] > key) {
+      bars[j].style.background = "#ff6347";
+      bars[j + 1].style.height = `${array[j]}px`;
+      array[j + 1] = array[j];
+      await new Promise(r => setTimeout(r, speed));
+      bars[j].style.background = "#00ffff";
+      j--;
+    }
+    array[j + 1] = key;
+    bars[j + 1].style.height = `${key}px`;
+    bars[i].style.background = "#32cd32";
+  }
+  enableButtons();
+}
+
+// Sort button
+sortBtn.addEventListener("click", () => {
+  const algo = algorithmSelect.value;
+  if (algo === "bubble") bubbleSort();
+  else if (algo === "selection") selectionSort();
+  else if (algo === "insertion") insertionSort();
+});
+</script>
+</body>
+</html>
